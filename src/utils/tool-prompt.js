@@ -1,13 +1,13 @@
 const { generateUUID } = require('./tools.js');
 const { logger } = require('./logger');
-const {
-  AGENT_FINAL_OPEN,
-  AGENT_FINAL_CLOSE,
-  AGENT_BLOCKED_OPEN,
-  AGENT_BLOCKED_CLOSE,
-  TOOL_CALL_OPEN,
-  TOOL_CALL_CLOSE
-} = require('./agent-turn.js');
+
+// 内嵌 Agent 控制标签常量，避免引用缺失的 agent-turn.js
+const AGENT_FINAL_OPEN = '<agent_final>';
+const AGENT_FINAL_CLOSE = '</agent_final>';
+const AGENT_BLOCKED_OPEN = '<agent_blocked>';
+const AGENT_BLOCKED_CLOSE = '</agent_blocked>';
+const TOOL_CALL_OPEN = '[TOOL CALL]';
+const TOOL_CALL_CLOSE = '[END TOOL CALL]';
 
 const TOOL_RESULT_OPEN = '[TOOL RESULT: ';
 const TOOL_RESULT_CLOSE = '[END TOOL RESULT]';
@@ -1292,7 +1292,7 @@ const createToolCallStreamParser = (options = {}) => {
   const push = (chunk) => {
     const result = { textDelta: '', recoveredText: '', completedCalls: [] };
     if (typeof chunk !== 'string' || chunk.length === 0) return result;
-    drain(chunk, false);
+    drain(chunk, result, false);
     return result;
   };
 
