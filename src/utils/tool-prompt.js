@@ -961,16 +961,6 @@ const parseToolCallsFromText = (fullText, options = {}) => {
     const spanEnd = Math.max(afterFence, closer.end);
     const span = fullText.slice(triggerAt, spanEnd);
 
-    if (emittedProse) {
-      warnings.push({
-        type: 'triggered_unrecovered',
-        reason: 'not the first content of the answer',
-        raw: trigger
-      });
-      logTriggerSuppressed(trigger, 'not the first content of the answer');
-      position = spanEnd;
-      continue;
-    }
 
     const built = buildToolCallPayload(object.text, repairSalvage ? { ...repairSalvage, nameHint } : null);
     const error = built.error || gateToolName(built.payload, allowedToolNames);
@@ -1170,16 +1160,6 @@ const createToolCallStreamParser = (options = {}) => {
     const spanEnd = Math.max(afterFence, closer.end);
     const span = triggerText + afterTrigger.slice(0, spanEnd);
     const leftover = afterTrigger.slice(spanEnd);
-
-    if (emittedProse) {
-      warnings.push({
-        type: 'triggered_unrecovered',
-        reason: 'not the first content of the answer',
-        raw: triggerText
-      });
-      logTriggerSuppressed(triggerText, 'not the first content of the answer');
-      return finish(leftover);
-    }
 
     const built = buildToolCallPayload(object.text, repairSalvage
       ? { ...repairSalvage, nameHint: extractTriggerNameHint(triggerText, tail) }
