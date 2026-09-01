@@ -3,5 +3,13 @@
   "buildCommand": null,
   "outputDirectory": null,
   "devCommand": null,
-  "framework": "express"
+  "framework": "express",
+  "functions": {
+    "src/server.js": {
+      "maxDuration": 60
+    },
+    "api/**/*.js": {
+      "maxDuration": 60
+    }
+  }
 }
