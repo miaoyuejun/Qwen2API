@@ -517,29 +517,53 @@ const salvageTruncatedSpan = (spanText, salvage) => {
 };
 
 /**
- * 纠正常见的终端/代码执行工具别名映射（核心兼容修复）
+ * Codex 原生支持的所有核心工具白名单（永久豁免）
+ */
+const CODEX_BUILTIN_TOOLS = new Set([
+  'exec_command',
+  'write_stdin',
+  'list_mcp_resources',
+  'list_mcp_resource_templates',
+  'read_mcp_resource',
+  'update_plan',
+  'request_user_input',
+  'view_image',
+  'get_goal',
+  'create_goal',
+  'update_goal'
+]);
+
+/**
+ * 工具别名与容错函数
  */
 const resolveToolAlias = (rawName, allowedToolNames) => {
   if (!rawName) return rawName;
-  const allowed = allowedToolNames instanceof Set ? allowedToolNames : new Set(allowedToolNames || []);
-  if (allowed.size === 0 || allowed.has(rawName)) return rawName;
-
-  const EXEC_ALIASES = ['exec_command', 'execute_command', 'bash', 'terminal', 'cmd', 'run_command', 'shell'];
+  
+  // 如果千问吐出 bash、terminal、cmd 等，统统统一指向 Codex 的真工具 exec_command
+  const EXEC_ALIASES = ['bash', 'terminal', 'cmd', 'run_command', 'shell', 'command_execution'];
   if (EXEC_ALIASES.includes(rawName.toLowerCase())) {
-    for (const validName of EXEC_ALIASES) {
-      if (allowed.has(validName)) return validName;
-    }
+    return 'exec_command';
   }
   return rawName;
 };
 
-/** allowedToolNames 闸门。支持别名重映射。 */
+/**
+ * 工具名称合法性放行闸门
+ */
 const gateToolName = (payload, allowedToolNames) => {
-  if (allowedToolNames && payload?.name) {
-    payload.name = resolveToolAlias(payload.name, allowedToolNames);
-    if (!allowedToolNames.has(payload.name)) {
-      return { type: 'unknown_tool', name: payload.name };
-    }
+  if (!payload || !payload.name) return null;
+
+  // 1. 别名归一化（bash -> exec_command）
+  payload.name = resolveToolAlias(payload.name, allowedToolNames);
+
+  // 2. 如果是 Codex 原生工具，或者 MCP 工具（以 mcp__ 开头），直接无条件通过！
+  if (CODEX_BUILTIN_TOOLS.has(payload.name) || payload.name.startsWith('mcp__') || payload.name.startsWith('multi_agent_')) {
+    return null;
+  }
+
+  // 3. 常规允许名单校验
+  if (allowedToolNames && !allowedToolNames.has(payload.name)) {
+    return { type: 'unknown_tool', name: payload.name };
   }
   return null;
 };
