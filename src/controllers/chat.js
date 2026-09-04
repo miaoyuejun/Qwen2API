@@ -990,6 +990,9 @@ const handleNonStreamResponse = async (res, response, enable_thinking, enable_we
 const handleChatCompletion = async (req, res) => {
     const { stream, model } = req.body
 
+    const toolNames = (req.body.tools || []).map(t => t.function?.name || t.name);
+logger.warn?.(`Codex 真实注册的工具列表: ${JSON.stringify(toolNames)}`, 'DEBUG');
+
     const enable_thinking = req.enable_thinking
     const enable_web_search = req.enable_web_search
 
